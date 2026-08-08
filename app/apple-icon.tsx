@@ -11,19 +11,31 @@ export default function AppleIcon() {
     (
       <div
         style={{
+          position: "relative",
           width: "100%",
           height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#f4efe5",
-          color: "#1c211c",
-          fontFamily: "Georgia, serif",
-          fontSize: 82,
-          border: "10px solid #985a37",
+          background: "#2454ff",
+          color: "#ffffff",
+          fontFamily: "Arial, sans-serif",
+          fontSize: 76,
+          fontWeight: 800,
+          letterSpacing: -6,
         }}
       >
         NF
+        <span
+          style={{
+            position: "absolute",
+            right: 24,
+            bottom: 20,
+            left: 24,
+            height: 8,
+            background: "#d8ff68",
+          }}
+        />
       </div>
     ),
     size,

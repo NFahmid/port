@@ -1,126 +1,42 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
-import {
-  Download,
-  GitBranch,
-  Mail,
-  Menu,
-  Moon,
-  Sun,
-  X,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, GitBranch, Mail, Menu, Moon, Sun, X } from "lucide-react";
 
 type Theme = "light" | "dark";
 
 const navItems = [
-  { href: "#home", label: "Home", id: "home" },
-  { href: "#education", label: "Education", id: "education" },
-  { href: "#projects", label: "Projects", id: "projects" },
-  { href: "#skills", label: "Skills", id: "skills" },
+  { href: "#projects", label: "Work", id: "projects" },
+  { href: "#profile", label: "Profile", id: "profile" },
+  { href: "#toolkit", label: "Toolkit", id: "toolkit" },
   { href: "#contact", label: "Contact", id: "contact" },
-];
-
-function getHeaderOffset() {
-  return (
-    (document.querySelector(".site-header")?.getBoundingClientRect().height ??
-      0) + 20
-  );
-}
-
-function getScrollBehavior(): ScrollBehavior {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? "auto"
-    : "smooth";
-}
-
-function getHashId() {
-  return decodeURIComponent(window.location.hash.replace("#", ""));
-}
-
-function scrollToSectionId(
-  id: string,
-  options: { behavior?: ScrollBehavior; updateHash?: boolean } = {},
-) {
-  const target = document.getElementById(id);
-  if (!target) {
-    return;
-  }
-
-  const top =
-    target.getBoundingClientRect().top + window.scrollY - getHeaderOffset();
-
-  window.scrollTo({
-    top: Math.max(0, top),
-    behavior: options.behavior ?? getScrollBehavior(),
-  });
-
-  if (options.updateHash !== false && window.location.hash !== `#${id}`) {
-    window.history.pushState(null, "", `#${id}`);
-  }
-}
-
-function readActiveSection() {
-  const sections = navItems
-    .map((item) => document.getElementById(item.id))
-    .filter(Boolean) as HTMLElement[];
-  const marker = getHeaderOffset() + Math.min(window.innerHeight * 0.24, 180);
-  let active = "home";
-
-  sections.forEach((section) => {
-    if (section.getBoundingClientRect().top <= marker) {
-      active = section.id;
-    }
-  });
-
-  return active;
-}
+] as const;
 
 export function PortfolioNav() {
   const [activeSection, setActiveSection] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>("light");
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const root = document.documentElement;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const syncSystemTheme = () => {
+    const syncTheme = () => {
       const stored = localStorage.getItem("theme");
-      const hasSavedTheme = stored === "dark" || stored === "light";
-      const next: Theme = hasSavedTheme
-        ? stored
-        : media.matches
-          ? "dark"
-          : "light";
-
-      if (!hasSavedTheme) {
-        root.dataset.theme = next;
-      }
-
+      const next: Theme =
+        stored === "light" || stored === "dark"
+          ? stored
+          : media.matches
+            ? "dark"
+            : "light";
+      root.dataset.theme = next;
       setTheme(next);
     };
 
-    syncSystemTheme();
-    media.addEventListener("change", syncSystemTheme);
-    return () => media.removeEventListener("change", syncSystemTheme);
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const finishLoading = () => {
-      window.setTimeout(() => {
-        root.dataset.loading = "false";
-      }, 120);
-    };
-
-    if (document.readyState === "complete") {
-      finishLoading();
-    } else {
-      window.addEventListener("load", finishLoading, { once: true });
-    }
-
-    return () => window.removeEventListener("load", finishLoading);
+    syncTheme();
+    media.addEventListener("change", syncTheme);
+    return () => media.removeEventListener("change", syncTheme);
   }, []);
 
   useEffect(() => {
@@ -131,56 +47,56 @@ export function PortfolioNav() {
       return;
     }
 
-    const revealObserver = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-            revealObserver.unobserve(entry.target);
+            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.16, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
     );
 
-    revealItems.forEach((item) => revealObserver.observe(item));
-    return () => revealObserver.disconnect();
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    let frame = 0;
+    const sections = ["home", ...navItems.map((item) => item.id)]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
 
-    const updateActiveSection = () => {
-      setActiveSection(readActiveSection());
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-18% 0px -64% 0px", threshold: [0, 0.15, 0.4] },
+    );
 
-    const requestActiveUpdate = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(updateActiveSection);
-    };
-
-    const restoreHashPosition = () => {
-      const id = getHashId();
-      if (id) {
-        scrollToSectionId(id, { behavior: "auto", updateHash: false });
-      }
-      requestActiveUpdate();
-    };
-
-    window.addEventListener("scroll", requestActiveUpdate, { passive: true });
-    window.addEventListener("hashchange", restoreHashPosition);
-    requestAnimationFrame(restoreHashPosition);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", requestActiveUpdate);
-      window.removeEventListener("hashchange", restoreHashPosition);
-    };
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     document.body.classList.toggle("nav-open", menuOpen);
-    return () => document.body.classList.remove("nav-open");
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && menuOpen) {
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("nav-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [menuOpen]);
 
   const toggleTheme = () => {
@@ -190,98 +106,68 @@ export function PortfolioNav() {
     setTheme(next);
   };
 
-  const handleSectionClick = (
-    event: MouseEvent<HTMLAnchorElement>,
-    id: string,
-  ) => {
-    event.preventDefault();
-    setMenuOpen(false);
-    setActiveSection(id);
-    scrollToSectionId(id);
-  };
-
   return (
-    <>
-      <div className="loader" aria-hidden="true">
-        <div className="loader-mark">
-          <span>NF</span>
-          <i />
+    <header className="site-header">
+      <nav className="nav-shell" aria-label="Primary navigation">
+        <a className="brand" href="#home" onClick={() => setMenuOpen(false)}>
+          <span aria-hidden="true">NF</span>
+          <strong>Nuren Fahmid</strong>
+        </a>
+
+        <button
+          ref={menuButtonRef}
+          className="nav-toggle"
+          type="button"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="site-menu"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
+        </button>
+
+        <div className="nav-links" id="site-menu" data-open={menuOpen}>
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={activeSection === item.id ? "is-active" : ""}
+              aria-current={activeSection === item.id ? "location" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+            </a>
+          ))}
+          <div className="mobile-nav-extras">
+            <a href="https://github.com/NFahmid" target="_blank" rel="noopener noreferrer">
+              <GitBranch size={18} aria-hidden="true" /> GitHub
+            </a>
+            <a href="mailto:nurenfahmid@iut-dhaka.edu">
+              <Mail size={18} aria-hidden="true" /> Email
+            </a>
+          </div>
         </div>
-      </div>
 
-      <header className="site-header">
-        <nav className="nav-shell" aria-label="Primary navigation">
-          <a
-            className="brand-mark"
-            href="#home"
-            onClick={(event) => handleSectionClick(event, "home")}
-          >
-            <span aria-hidden="true">NF</span>
-            <span>Nuren Fahmid</span>
-          </a>
-
+        <div className="nav-actions">
           <button
-            className="nav-toggle"
+            className="theme-toggle"
             type="button"
-            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={menuOpen}
-            aria-controls="site-menu"
-            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "dark"}
+            onClick={toggleTheme}
           >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
           </button>
-
-          <div className="nav-links" id="site-menu" data-open={menuOpen}>
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className={activeSection === item.id ? "is-active" : ""}
-                aria-current={activeSection === item.id ? "page" : undefined}
-                onClick={(event) => handleSectionClick(event, item.id)}
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-
-          <div className="nav-actions">
-            <a
-              className="icon-link"
-              href="https://github.com/NFahmid"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open Nuren Fahmid on GitHub"
-            >
-              <GitBranch size={18} />
-            </a>
-            <a
-              className="icon-link"
-              href="mailto:nurenfahmid@iut-dhaka.edu"
-              aria-label="Email Nuren Fahmid"
-            >
-              <Mail size={18} />
-            </a>
-            <a
-              className="icon-link"
-              href="/resume/Nuren-Fahmid-Resume.pdf"
-              download="Nuren-Fahmid-Resume.pdf"
-              aria-label="Download Nuren Fahmid resume"
-            >
-              <Download size={18} />
-            </a>
-            <button
-              className="icon-link"
-              type="button"
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-              aria-pressed={theme === "dark"}
-              onClick={toggleTheme}
-            >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </nav>
-      </header>
-    </>
+          <a
+            className="resume-link"
+            href="/resume/Nuren-Fahmid-Resume.pdf"
+            download="Nuren-Fahmid-Resume.pdf"
+          >
+            <Download size={17} aria-hidden="true" />
+            Résumé
+          </a>
+        </div>
+      </nav>
+    </header>
   );
 }
