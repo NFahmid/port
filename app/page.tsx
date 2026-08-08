@@ -269,7 +269,7 @@ const skillGroups = [
   {
     title: "Databases",
     icon: Database,
-    skills: ["PostgreSQL", "MySQL", "Oracle", "PL/SQL", "MongoDB", "Neo4j", "Vector DBs"],
+    skills: ["PostgreSQL", "MySQL", "Oracle", "PL/SQL", "MongoDB", "Neo4j"],
   },
   {
     title: "AI And Systems",
@@ -281,6 +281,7 @@ const skillGroups = [
       "Celery",
       "WebSockets",
       "Networking",
+      "Vector databases"
     ],
   },
   {
@@ -388,7 +389,7 @@ export default function Home() {
                 </a>
                 <a
                   className="button button-secondary"
-                  href="/resume/Nuren-Fahmid-Resume.pdf"
+                  href="/resume/CV.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="View Nuren Fahmid resume in a new tab"
