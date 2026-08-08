@@ -269,7 +269,7 @@ const skillGroups = [
   {
     title: "Databases",
     icon: Database,
-    skills: ["PostgreSQL", "MySQL", "Oracle", "PL/SQL", "MongoDB", "Neo4j"],
+    skills: ["PostgreSQL", "MySQL", "Oracle", "PL/SQL", "MongoDB", "Neo4j", "Vector DBs"],
   },
   {
     title: "AI And Systems",
@@ -315,7 +315,7 @@ const contactLinks = [
   },
   {
     label: "Resume",
-    href: "/resume/Nuren-Fahmid-Resume.pdf",
+    href: "/resume/CV.pdf",
     detail: "Download PDF",
     icon: Download,
     download: true,
